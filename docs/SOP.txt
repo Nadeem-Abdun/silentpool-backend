@@ -1,0 +1,392 @@
+# SilentPool App Backend: Detailed SOP (Standard Operating Procedure)
+
+This document provides a step-by-step breakdown of all the components, files, and functionalities required to build the SilentPool app backend from start to finish. It serves as a reference guide to ensure consistent progress and avoid deviation during development.
+
+---
+
+## **High-Level Architecture**
+The SilentPool app backend is designed to:
+1. Support user authentication via anonymous identities.
+2. Manage pools (unique chat groups) with encryption capabilities.
+3. Handle real-time communication through WebSocket.
+4. Store and fetch messages and pool data securely.
+5. Implement strong data validation and error handling mechanisms.
+6. Provide modularity for scalability and maintainability.
+
+---
+
+## **Core Components**
+
+### **1. Server Initialization**
+**Files:**
+- `index.ts`: Entry point for starting the server and connecting to the database.
+- `app.ts`: Configures middleware, routes, and basic server setup.
+
+#### **Responsibilities:**
+- Initialize the Express app.
+- Configure middleware like CORS, body parsers, static file serving, etc.
+- Register routes for API endpoints.
+- Initialize the WebSocket server for real-time communication.
+- Connect to the database.
+
+---
+
+### **2. Models**
+Define schemas for MongoDB collections using Mongoose.
+
+#### **(a) Message Model (`message.model.ts`)**
+**Purpose:** Store chat messages.
+- **Fields:**
+  - `poolId`: Reference to the pool the message belongs to.
+  - `senderAlias`: Alias of the sender.
+  - `content`: Encrypted message content.
+  - `timestamp`: Time when the message was sent.
+
+#### **(b) Pool Model (`pool.model.ts`)**
+**Purpose:** Manage chat pools.
+- **Fields:**
+  - `poolId`: Unique identifier for the pool.
+  - `creatorAlias`: Alias of the pool creator.
+  - `encryptionKey`: Optional encryption key.
+  - `participants`: List of user aliases in the pool.
+  - `createdAt`: Pool creation timestamp.
+
+#### **(c) User Model (`user.model.ts`)**
+**Purpose:** Manage user sessions and pool participation.
+- **Fields:**
+  - `alias`: Unique alias of the user.
+  - `sessionToken`: Token for authenticating user sessions.
+  - `pools`: List of pool IDs the user is a participant of.
+
+---
+
+### **3. Routes**
+Define API endpoints for user authentication, pool management, and message handling.
+
+#### **(a) Authentication Routes (`auth.routes.ts`)**
+**Endpoints:**
+- `POST /auth/anonymous`: Generate an anonymous user identity.
+  - **Controller:** `generateAnonymousIdentity`
+
+#### **(b) Pool Routes (`pool.routes.ts`)**
+**Endpoints:**
+- `POST /pools/create`: Create a new pool.
+  - **Controller:** `createPool`
+  - **Middleware:** `authenticateUser`
+- `POST /pools/join`: Join an existing pool.
+  - **Controller:** `joinPool`
+  - **Middleware:** `authenticateUser`
+
+#### **(c) Message Routes (`message.routes.ts`)**
+**Endpoints:**
+- `GET /messages/:poolId/messages`: Fetch message history for a pool.
+  - **Controller:** `fetchMessages`
+  - **Middleware:** `authenticateUser`
+
+---
+
+### **4. Controllers**
+Define the logic for handling API requests.
+
+#### **(a) Authentication Controller (`auth.controller.ts`)**
+- **`generateAnonymousIdentity`**:
+  - Generates a unique alias and session token for an anonymous user.
+  - Saves the user in the database.
+
+#### **(b) Pool Controller (`pool.controller.ts`)**
+- **`createPool`**:
+  - Creates a new pool with a unique `poolId`, creator alias, and optional encryption key.
+  - Adds the creator to the pool's participant list.
+
+- **`joinPool`**:
+  - Allows a user to join an existing pool by `poolId`.
+  - Adds the user to the pool's participant list.
+
+#### **(c) Message Controller (`message.controller.ts`)**
+- **`fetchMessages`**:
+  - Retrieves message history for a given `poolId`.
+
+---
+
+### **5. Middleware**
+Define reusable logic for request handling.
+
+#### **(a) Authentication Middleware (`auth.middleware.ts`)**
+- **`authenticateUser`**:
+  - Validates the session token from incoming requests.
+  - Ensures the user is authorized to access the requested resource.
+
+---
+
+### **6. WebSocket Server**
+**File:** `websocket.server.ts`
+
+#### **Responsibilities:**
+- Initialize WebSocket server.
+- Handle connections and disconnections.
+- Process incoming messages (validate, save to DB, and broadcast).
+- Broadcast typing indicators.
+- Support encryption for real-time communication.
+
+---
+
+### **7. Utilities**
+**Purpose:** Reusable helper functions and constants.
+- **File:** `constants.utilities.ts`
+  - Define constants like `API_V1_BASEPATH`.
+- **File:** `validation.utilities.ts`
+  - Functions for validating input payloads.
+
+---
+
+### **8. Database Connection**
+**File:** `index.database_connections.ts`
+- Establish a connection to MongoDB.
+- Handle connection errors and retry logic.
+
+---
+
+### **9. Testing**
+Define test cases to ensure reliability and correctness.
+- **Unit Tests**:
+  - Models: Validate schema constraints.
+  - Controllers: Test individual controller functions.
+- **Integration Tests**:
+  - End-to-end API testing for all routes.
+
+---
+
+### **10. Deployment**
+- **Environment Configuration**:
+  - Use `.env` for secrets and environment-specific settings.
+- **Hosting**:
+  - Deploy on a platform like AWS, Vercel, or Render.
+
+---
+
+## **Development Roadmap**
+1. **Setup**
+   - Configure Express app, database connection, and WebSocket server.
+2. **Models**
+   - Define schemas for `User`, `Pool`, and `Message`.
+3. **Routes & Controllers**
+   - Implement endpoints for authentication, pool management, and message handling.
+4. **WebSocket**
+   - Build real-time communication for message exchange.
+5. **Testing**
+   - Write and run tests for all components.
+6. **Deployment**
+   - Deploy to a production environment.
+
+---
+
+This document serves as a blueprint for the SilentPool backend. It outlines all components, their purposes, and the steps needed to achieve the final product.
+
+
+
+
+
+# SilentPool Backend Development SOP
+
+This document outlines the steps, components, and rationale for building the SilentPool app backend. It will serve as a reference for ongoing development, ensuring alignment with project goals.
+
+---
+
+## **Project Overview**
+SilentPool is a discreet messaging application enabling users to create and join encrypted chat pools. Conversations are ephemeral, and no identifiable user information is stored. This backend serves as the foundation for managing users, pools, and real-time messaging.
+
+---
+
+## **Core Architecture**
+
+### **Key Technologies**
+1. **Backend Framework**: Express.js (TypeScript).
+2. **Database**: MongoDB (Mongoose for ORM).
+3. **WebSocket Server**: `ws` for real-time communication.
+4. **Environment Variables**: `dotenv` for configuration.
+
+### **Modules and Their Purpose**
+
+#### **1. Models**
+- **`User`**: Represents an anonymous user with alias, session token, and associated pools.
+- **`Pool`**: Represents chat pools, including participants and optional encryption keys.
+- **`Message`**: Stores chat messages within pools.
+
+#### **2. Controllers**
+- **`AuthController`**:
+  - Generate anonymous identities for users.
+  - Endpoint: `POST /auth/anonymous`.
+- **`PoolController`**:
+  - Create new pools: `POST /pools/create`.
+  - Join existing pools: `POST /pools/join`.
+- **`MessageController`**:
+  - Fetch message history: `GET /messages/:poolId`.
+
+#### **3. Routes**
+- `auth.routes.ts`: Routes for authentication.
+- `pool.routes.ts`: Routes for pool creation and joining.
+- `message.routes.ts`: Routes for fetching messages.
+
+#### **4. Middlewares**
+- **`AuthMiddleware`**:
+  - Validates user session tokens for protected routes.
+
+#### **5. WebSocket Server**
+Handles real-time messaging, including broadcasting messages to pool participants.
+
+#### **6. Utilities**
+- Constants for configurations (e.g., `API_V1_BASEPATH`).
+- Helper functions for data validation and error handling.
+
+---
+
+## **Features and Functionalities**
+
+### **Implemented Features**
+1. **Authentication**:
+   - Anonymous user identity generation.
+2. **Pool Management**:
+   - Create and join pools.
+   - Maintain participant lists.
+3. **Messaging**:
+   - Real-time message broadcasting via WebSocket.
+   - Message storage in MongoDB.
+4. **Database Connection**:
+   - Robust connection handling with Mongoose.
+5. **Basic Security**:
+   - CORS restrictions.
+   - Input validation.
+6. **Static File Hosting**:
+   - Serve static files from the `public` directory.
+
+### **Pending Features**
+1. **Typing Indicators**:
+   - Notify users in a pool when someone is typing.
+   - Implementation: Broadcast additional WebSocket messages to all participants.
+2. **Message Encryption**:
+   - Encrypt messages before sending via WebSocket.
+   - Decrypt messages on the client side for end-to-end security.
+3. **Pool Expiry and Cleanup**:
+   - Automatically destroy pools after inactivity.
+   - Remove associated messages and participants.
+4. **Error Handling and Validations**:
+   - Improve error responses for WebSocket and HTTP endpoints.
+   - Validate data payloads (e.g., required fields, valid pool IDs).
+5. **Deployment**:
+   - Deploy to AWS, Vercel, or Render.
+   - Secure environment variables.
+6. **Testing**:
+   - Unit tests for controllers and WebSocket logic.
+   - Integration tests for API endpoints and database operations.
+7. **Documentation**:
+   - Use Swagger for API documentation.
+   - Detailed README for contributors.
+
+---
+
+## **Development Roadmap**
+
+### **Stage 1: Core Backend Implementation**
+1. **Setup Project**:
+   - Initialize with `express`, `ws`, and `mongoose`.
+   - Configure `.env` for environment variables.
+2. **Build Models**:
+   - Define `User`, `Pool`, and `Message` schemas.
+3. **Implement Controllers**:
+   - Write logic for authentication, pool management, and messaging.
+4. **Setup WebSocket Server**:
+   - Initialize WebSocket server with `ws`.
+   - Handle real-time message broadcasting.
+5. **Configure Routes**:
+   - Map routes to controllers.
+6. **Setup Middleware**:
+   - Implement authentication middleware for protected routes.
+
+### **Stage 2: Enhancements**
+1. **Add Message Encryption**:
+   - Define methods for encryption and decryption.
+   - Exchange encryption keys during pool creation.
+2. **Typing Indicators**:
+   - Extend WebSocket logic to support typing notifications.
+3. **Pool Expiry**:
+   - Implement a background job or use database TTL features.
+
+### **Stage 3: Testing and Deployment**
+1. **Unit Testing**:
+   - Test controllers and WebSocket handlers.
+2. **Integration Testing**:
+   - Verify API endpoints and database interactions.
+3. **Deploy**:
+   - Deploy to a production environment.
+   - Optimize for performance and scalability.
+
+---
+
+## **Detailed Steps for Pending Features**
+
+### **Typing Indicators**
+1. **Frontend**:
+   - Emit a `typing` event via WebSocket when a user starts typing.
+2. **Backend**:
+   - Handle `typing` events and broadcast them to pool participants.
+
+### **Message Encryption**
+1. **Encryption Setup**:
+   - Use a library like `crypto` for AES encryption.
+   - Generate encryption keys during pool creation.
+2. **Frontend**:
+   - Encrypt messages before sending.
+   - Decrypt received messages.
+
+### **Pool Expiry**
+1. **Database TTL**:
+   - Set a TTL index on the `Pool` model.
+2. **Background Job**:
+   - Use a library like `node-cron` to clean up expired pools.
+
+### **Error Handling**
+1. **WebSocket Errors**:
+   - Validate message payloads.
+   - Send error responses for invalid data.
+2. **HTTP Errors**:
+   - Standardize error responses across endpoints.
+
+### **Deployment**
+1. **Environment Setup**:
+   - Configure production variables.
+   - Use a CI/CD pipeline.
+
+---
+
+## **File Structure**
+```
+root
+│
+├── app.ts              // Core Express app setup
+├── index.ts            // Server entry point
+├── routes/             // API routes
+│   ├── auth.routes.ts
+│   ├── message.routes.ts
+│   └── pool.routes.ts
+├── controllers/        // Controller logic
+│   ├── auth.controller.ts
+│   ├── message.controller.ts
+│   └── pool.controller.ts
+├── models/             // Database models
+│   ├── user.model.ts
+│   ├── pool.model.ts
+│   └── message.model.ts
+├── services/           // WebSocket server
+│   └── websocket.server.ts
+├── middlewares/        // Authentication middleware
+│   └── auth.middleware.ts
+├── utilities/          // Utility functions
+│   └── constants.utilities.ts
+├── public/             // Static files
+└── .env                // Environment variables
+```
+
+---
+
+This document should serve as a comprehensive reference for building, maintaining, and enhancing the SilentPool backend.
+
