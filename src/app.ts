@@ -36,8 +36,12 @@ app.get("/", (req, res) => {
 });
 
 // Server Routes
-// import userRouter from "./routes/user.routes.js";
+import authRouter from "./routes/auth.routes.js";
+import poolRouter from "./routes/pool.routes.js";
+import messageRoutes from "./routes/message.routes.js";
 
-// app.use(`${API_V1_BASEPATH}/users`, userRouter);
+app.use(`${API_V1_BASEPATH}/auth`, authRouter);
+app.use(`${API_V1_BASEPATH}/pools`, poolRouter);
+app.use(`${API_V1_BASEPATH}/messages`, messageRoutes);
 
 export { app }
