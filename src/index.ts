@@ -1,10 +1,13 @@
+import { createServer } from "http";
 import { app } from "./app.js";
 import dotenv from "dotenv";
 import connectToDatabase from "./database_connections/index.database_connections.js";
+import { initializeWebSocketServer } from "./services/websocket.server.js";
 
-dotenv.config({
-    path: ".env"
-});
+dotenv.config({ path: ".env" });
+
+const server = createServer(app); // Create an HTTP server for Express
+initializeWebSocketServer(server); 
 
 connectToDatabase()
     .then(() => {
