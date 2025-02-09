@@ -8,7 +8,7 @@ const app = express();
 const allowedClientOrigins = [process.env.CLIENT_URL_LOCAL, process.env.CLIENT_URL_IDX, process.env.CLIENT_URL_VERCEL]
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin || allowedClientOrigins.includes(origin)) { // Check if the request origin is in the allowed origins array or if no origin (server-to-server requests)
+        if (!origin || allowedClientOrigins.includes(origin) || origin.startsWith("app://")) { // Check if the request origin is in the allowed origins array or if no origin (server-to-server requests)
             callback(null, true)
         } else {
             callback(new Error("Not allowed by CORS"))
