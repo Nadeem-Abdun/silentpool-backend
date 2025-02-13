@@ -1,8 +1,8 @@
-import { Router } from "express";
+import express from "express";
 import { createPool, joinPool, leavePool } from "../controllers/pool.controller.js";
 import authenticateUser from "../middlewares/auth.middleware.js";
 
-const router = Router();
+const router = express.Router();
 
 // Route to create a pool (protected by authentication middleware)
 router.get("/create", authenticateUser, createPool);
