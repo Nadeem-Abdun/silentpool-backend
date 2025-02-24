@@ -41,7 +41,7 @@ const joinPool = async (req: Request, res: Response) => {
 
         logger.info(`User ${userAlias} attempting to join pool: ${poolId}`);
         // Check if pool exists
-        const pool = await Pool.findById(poolId);
+        const pool = await Pool.findOne(poolId);
         if (!pool) {
             logger.warn(`Pool not found: poolId=${poolId}`);
             res.status(404).json({ message: "Pool not found" });
