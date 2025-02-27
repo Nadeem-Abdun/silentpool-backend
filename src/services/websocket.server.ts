@@ -2,6 +2,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import Message from "../models/message.model.js";
 import Pool from "../models/pool.model.js";
 import { encryptMessage } from "../utilities/encryption.utilities.js";
+import logger from "../utilities/logger.utilities.js";
 
 // Extend the WebSocket type to include custom properties
 interface CustomWebSocket extends WebSocket {
@@ -12,16 +13,18 @@ interface CustomWebSocket extends WebSocket {
 const updateLastActiveAt = async (poolId: string) => {
     try {
         await Pool.findOneAndUpdate({ poolId: poolId }, { lastActiveAt: new Date() });
+        logger.info(`Updated lastActiveAt for pool: ${poolId}`);
     } catch (error) {
-        console.error(`Error updating lastActiveAt for pool ${poolId}:`, error);
+        logger.error(`Error updating lastActiveAt for pool ${poolId}: ${error}`);
     }
 }
 
 export const initializeWebSocketServer = (server: any) => {
     const wss = new WebSocketServer({ server });
+    logger.info("WebSocket connection Initializing");
 
     wss.on("connection", (ws: CustomWebSocket) => {
-        console.log("New WebSocket connection established");
+        logger.info("New WebSocket connection established");
 
         ws.on("message", async (data) => {
             try {
@@ -32,6 +35,7 @@ export const initializeWebSocketServer = (server: any) => {
                     // Associate this WebSocket connection with a pool
                     ws.poolId = poolId;
                     await updateLastActiveAt(poolId); // Update activity time on join
+                    logger.info(`User joined pool: ${poolId}`);
                 } else if (type === "typing") {
                     // Broadcast typing notification to all clients in the same pool
                     wss.clients.forEach((client) => {
@@ -45,6 +49,7 @@ export const initializeWebSocketServer = (server: any) => {
                         }
                     });
                     await updateLastActiveAt(poolId); // Update activity time on join
+                    logger.info(`Typing notification sent in pool: ${poolId} by ${senderAlias}`);
                 } else if (type === "message") {
                     // Broadcast message to all clients in the same pool
                     const pool = await Pool.findOne({ poolId: poolId });
@@ -73,9 +78,10 @@ export const initializeWebSocketServer = (server: any) => {
                         }
                     });
                     await updateLastActiveAt(poolId); // Update activity time on join
+                    logger.info(`Message sent in pool: ${poolId} by ${senderAlias}`);
                 }
             } catch (error) {
-                console.error("Error handling WebSocket message:", error);
+                logger.error("Error handling WebSocket message:", error);
                 ws.send(JSON.stringify({
                     type: "error",
                     message: "An error occurred while processing your request.",
@@ -84,7 +90,7 @@ export const initializeWebSocketServer = (server: any) => {
         });
 
         ws.on("close", () => {
-            console.log("WebSocket connection closed");
+            logger.info("WebSocket connection closed");
         });
     });
 };
