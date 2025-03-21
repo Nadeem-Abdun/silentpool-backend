@@ -2,17 +2,17 @@ import { createServer } from "http";
 import { app } from "./app.js";
 import dotenv from "dotenv";
 import connectToDatabase from "./database_connections/index.database_connections.js";
-import { initializeWebSocketServer } from "./services/websocket.server.js";
+import { initializeSocketIOServer } from "./services/socketio.server.js";
 import logger from "./utilities/logger.utilities.js";
 
 dotenv.config({ path: ".env" });
 
-const server = createServer(app); // Create an HTTP server for Express
-initializeWebSocketServer(server); 
+const server = createServer(app);
+initializeSocketIOServer(server);
 
 connectToDatabase()
     .then(() => {
-        app.listen(process.env.PORT, () => {
+        server.listen(process.env.PORT, () => {
             logger.info(`Server is running on port http://localhost:${process.env.PORT} & DB Connection Successful`);
         });
     })
