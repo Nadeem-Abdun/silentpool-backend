@@ -65,8 +65,9 @@ const joinPool = async (req: Request, res: Response) => {
         res.status(200).json({
             message: "Successfully joined the pool",
             pool: {
-                id: pool._id,
+                poolId: pool.poolId,
                 participants: pool.participants,
+                encryptionKey: pool.encryptionKey,
             },
         });
     } catch (error) {
