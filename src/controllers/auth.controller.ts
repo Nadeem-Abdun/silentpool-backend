@@ -2,13 +2,15 @@ import { Request, Response } from "express";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import logger from "../utilities/logger.utilities.js";
+import { aliasNamesGenerator } from "../utilities/aliasNamesGenerator.utilities.js";
 
 const generateAnonymousIdentity = async (req: Request, res: Response) => {
     try {
         logger.info("Request received to generate anonymous identity");
 
         // Generate a unique alias
-        const alias = `user_${Math.random().toString(36).substring(2, 10)}`;
+        // const alias = `user_${Math.random().toString(36).substring(2, 10)}`;
+        const alias = aliasNamesGenerator();
         logger.debug(`Generated alias: ${alias}`);
 
         // Check if JWT_SECRET is defined
