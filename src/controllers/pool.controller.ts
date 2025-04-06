@@ -3,6 +3,7 @@ import Pool from "../models/pool.model.js";
 import crypto from "crypto";
 import { generateEncryptionKey } from "../utilities/encryption.utilities.js";
 import logger from "../utilities/logger.utilities.js";
+import { poolNamesGenerator } from "../utilities/poolNamesGenerator.utilities.js";
 
 const createPool = async (req: Request, res: Response) => {
     try {
@@ -10,7 +11,8 @@ const createPool = async (req: Request, res: Response) => {
         const creatorAlias = (req as any).user.alias;
 
         // Generate a unique Pool ID
-        const poolId = `pool_${crypto.randomBytes(6).toString("hex")}`;
+        // const poolId = `pool_${crypto.randomBytes(6).toString("hex")}`;
+        const poolId = poolNamesGenerator();
 
         // Generate a unique encryption key
         const encryptionKey = generateEncryptionKey();
@@ -108,4 +110,22 @@ const leavePool = async (req: Request, res: Response) => {
     }
 };
 
-export { createPool, joinPool, leavePool };
+const getPoolInfo = async (req: Request, res: Response) => {
+    try {
+        const { poolId } = req.params;
+        logger.info(`Fetching pool info: poolId=${poolId}`);
+        const pool = await Pool.findOne({ poolId });
+        if (!pool) {
+            res.status(404).json({ message: "Pool not found" });
+            logger.warn(`Pool not found: poolId=${poolId}`);
+            return;
+        }
+        logger.info(`Pool info fetched: poolId=${poolId}`);
+        res.status(200).send(pool);
+    } catch (error) {
+        logger.error("Error in getPoolInfo", error);
+        res.status(500).json({ message: "Error fetching pool info", error });
+    }
+};
+
+export { createPool, joinPool, leavePool, getPoolInfo };
