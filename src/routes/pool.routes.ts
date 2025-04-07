@@ -1,5 +1,5 @@
 import express from "express";
-import { createPool, joinPool, leavePool } from "../controllers/pool.controller.js";
+import { createPool, joinPool, leavePool, getPoolInfo } from "../controllers/pool.controller.js";
 import authenticateUser from "../middlewares/auth.middleware.js";
 import logger from "../utilities/logger.utilities.js";
 
@@ -19,5 +19,10 @@ router.post("/leave", authenticateUser, (req, res, next) => {
     logger.info(`Request to leave pool, poolId: ${req.body.poolId}, ${req.method} ${req.originalUrl}`);
     next();
 }, leavePool);
+
+router.get("/info/:poolId", authenticateUser, (req, res, next) => {
+    logger.info(`Request to get pool info, poolId: ${req.params.poolId}, ${req.method} ${req.originalUrl}`);
+    next();
+}, getPoolInfo);
 
 export default router;
