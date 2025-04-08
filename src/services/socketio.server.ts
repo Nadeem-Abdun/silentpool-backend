@@ -30,7 +30,7 @@ export const initializeSocketIOServer = (server: any) => {
             socket.join(poolId); // Join the room
             await updateLastActiveAt(poolId);
             logger.info(`User ${senderAlias} joined pool: ${poolId}`);
-            io.to(poolId).emit("notification", `${senderAlias} has joined the pool.`);
+            socket.broadcast.to(poolId).emit("notification", `${senderAlias} has joined the pool.`);
         });
 
         socket.on("typing", ({ poolId, senderAlias }) => {
@@ -64,6 +64,19 @@ export const initializeSocketIOServer = (server: any) => {
                 logger.error("Error handling message event: ", error);
                 socket.emit("error", "Failed to process your message.");
             }
+        });
+
+        socket.on("leave", async ({ poolId, senderAlias }) => {
+            socket.leave(poolId); // Left the room
+            await updateLastActiveAt(poolId);
+            logger.info(`User ${senderAlias} left pool: ${poolId}`);
+            socket.broadcast.to(poolId).emit("notification", `${senderAlias} has left the pool.`);
+        });
+
+        socket.on("leave_quietly", async ({ poolId, senderAlias }) => {
+            socket.leave(poolId); // Left the room
+            await updateLastActiveAt(poolId);
+            logger.info(`User ${senderAlias} quietly left pool: ${poolId}`);
         });
 
         socket.on("disconnect", () => {
